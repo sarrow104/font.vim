@@ -6,10 +6,12 @@ font setting and restore utility
 
 normal mode command
 
-<A-+>
+\<A-+\>
+
 	font size enlarge
 
-<A-->
+\<A--\>
+
 	font size reduce
 
 ----------------------------------
@@ -17,11 +19,15 @@ normal mode command
 command mode
 
 :FontInfo
+
 :MonoFont
+
 :TextFont
+
 :FontSize
 
 ## setting file
 
 $VIMFILES/font.vim/autoload/font_setting.lin
+
 $VIMFILES/font.vim/autoload/font_setting.win
