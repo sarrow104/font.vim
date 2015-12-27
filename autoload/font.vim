@@ -128,7 +128,7 @@ function font#Restore_font_setting()		" {{{2
 	"redir END
 	call <SID>ReadFontSetting()
     else
-	let g:guiFont={'data': <SID>Get{MySys()}DefaultValue(), 'name': 'default'}
+	let g:guiFont={'data': <SID>Get{<SID>MySys()}DefaultValue(), 'name': 'default'}
 	"echom string(g:guiFont)
     endif
     call <SID>SetFont()
@@ -145,7 +145,7 @@ function font#FontInfo()		" {{{2
     for i in ['normal', 'wide']
 	if has_key(_fset_, i)
 	    let _msg_ .= 'gf'.i[0].'='
-			\ . iconv(<SID>To{MySys()}FontStr(i), g:system_encoding, &encoding).' '
+			\ . iconv(<SID>To{<SID>MySys()}FontStr(i), g:system_encoding, &encoding).' '
 	endif
     endfor
     if strlen(_msg_)
@@ -167,6 +167,19 @@ function s:Is_Need_Update_FSets()	" {{{2
     return !exists('g:guiFont_s') || (filereadable(<SID>GetUserDefineFSetsFName())
 		\ && exists('g:guiFont_s_timestamp')
 		\ && g:guiFont_s_timestamp < getftime(<SID>GetUserDefineFSetsFName()))
+endfunction
+
+function s:MySys()
+    if exists('g:operation_system')
+	return g:operation_system
+    endif
+    let g:operation_system=''
+    if has('win16') || has('win32') || has('win64') || has('win95')
+	let g:operation_system='windows'
+    elseif has('unix')
+	let g:operation_system='linux'
+    endif
+    return g:operation_system
 endfunction
 
 " 从外部文件恢复Dictionary类型的font scheme数据。
@@ -227,7 +240,7 @@ function s:SetFont()		" {{{2
     let _fset_=g:guiFont['data']
     for i in ['normal', 'wide']
 	if has_key(_fset_, i)
-	    execute 'set gf'.i[0].'='. <SID>To{MySys()}FontStr(i)
+	    execute 'set gf'.i[0].'='. <SID>To{<SID>MySys()}FontStr(i)
 	endif
     endfor
 endfunction
@@ -259,7 +272,7 @@ endfunction
 function s:GetFontSettingFName()		" {{{2
     if !exists('g:_font_set_fname_')
 	let g:_font_set_fname_=fnamemodify(globpath(&rtp, 'autoload/font.vim'), ':p:h')
-		    \ .'/font_setting.' . strpart(MySys(), 0, 3)
+		    \ .'/font_setting.' . strpart(<SID>MySys(), 0, 3)
     endif
     return g:_font_set_fname_
 endfunction
@@ -290,7 +303,7 @@ function s:ReadFontSetting()		" {{{2
 	if exists('_fset_')
 	    unlet _fset_
 	endif
-	let _fset_=<SID>Get{MySys()}DefaultValue()
+	let _fset_=<SID>Get{<SID>MySys()}DefaultValue()
 	let _fsch_='default'
     endif
     let g:guiFont={'data': _fset_, 'name': _fsch_}
@@ -326,7 +339,7 @@ function s:GetFontSetting()		" {{{2
     return g:guiFont
 endfunction
 function font#FontInfoCachedUpdate(style, _str)	"{{{2
-    call <SID>From{MySys()}FontStr(a:style, a:_str)
+    call <SID>From{<SID>MySys()}FontStr(a:style, a:_str)
     if !has_key(g:guiFont.data, 'normal') && has_key(g:guiFont.data, 'wide')
 	let g:guiFont.data['normal'] = g:guiFont.data['wide']
     endif
