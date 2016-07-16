@@ -134,11 +134,18 @@ function font#Restore_font_setting()		" {{{2
     call <SID>SetFont()
 endfunction
 
+function s:SyncCurrentFontInfo()
+    for i in ['normal', 'wide']
+        call <SID>From{util#MySys()}FontStr(i, eval('&gf'.i[0]))
+    endfor
+endfunction
+
 " 用一行来显示当前font scheme名字；以及当前gfn与gfw的设置。
 function font#FontInfo()		" {{{2
     " Sarrow: 2011-05-06
     silent redraw
     " End:
+    call <SID>SyncCurrentFontInfo()
     let _fset_=<SID>GetFontSetting()['data']
 
     let _msg_=''
@@ -213,14 +220,22 @@ endfunction
 
 function s:TowindowsFontStr(style)		" {{{2
     let _fset_=g:guiFont['data']
-    return substitute(iconv(_fset_[a:style], &encoding, g:system_encoding), ' ', '_', 'g')
-		\ .':h'.string(_fset_['size']).':cANSI'
+    if len(_fset_[a:style]) > 0
+        return substitute(iconv(_fset_[a:style], &encoding, g:system_encoding), ' ', '_', 'g')
+                    \ .':h'.string(_fset_['size']).':cANSI'
+    else
+        return ''
+    endif
 endfunction
 
 function s:TolinuxFontStr(style)		" {{{2
     let _fset_=g:guiFont['data']
     " return escape(_fset_[a:style], ' ') . '\ ' . string(_fset_['size'])
-    return escape(_fset_[a:style] . ' ' . string(_fset_['size']), ' ')
+    if len(_fset_[a:style]) > 0
+        return escape(_fset_[a:style] . ' ' . string(_fset_['size']), ' ')
+    else
+        return ''
+    endif
 endfunction
 
 function s:SetFont()		" {{{2
@@ -299,12 +314,18 @@ endfunction
 function s:FromwindowsFontStr(style, _str)		" {{{2
     let _str=system#ToVimEnc(substitute(a:_str, '_', ' ', 'g'))
     let g:guiFont['data'][a:style]=matchstr(_str, '^[^:]\+')
-    let g:guiFont['data']['size']=str2nr(matchstr(_str, ':h\zs\d\+\ze:'))
+    let l:fontSize = str2nr(matchstr(_str, ':h\zs\d\+\ze:'))
+    if l:fontSize > 0
+        let g:guiFont['data']['size'] = l:fontSize
+    endif
 endfunction
 
 function s:FromlinuxFontStr(style, _str)		" {{{2
     let g:guiFont['data'][a:style]=matchstr(a:_str, '^\zs.\{-}\ze \d\+$')
-    let g:guiFont['data']['size']=str2nr(matchstr(a:_str, '\<\d\+$'))
+    let l:fontSize = str2nr(matchstr(a:_str, '\<\d\+$'))
+    if l:fontSize > 0
+        let g:guiFont['data']['size'] = l:fontSize
+    endif
 endfunction
 
 " 从内存创建g:guiFont
@@ -325,16 +346,19 @@ function s:GetFontSetting()		" {{{2
     endfor
     return g:guiFont
 endfunction
+
 function font#FontInfoCachedUpdate(style, _str)	"{{{2
     call <SID>From{util#MySys()}FontStr(a:style, a:_str)
     if !has_key(g:guiFont.data, 'normal') && has_key(g:guiFont.data, 'wide')
 	let g:guiFont.data['normal'] = g:guiFont.data['wide']
     endif
 endfunction
+
 function s:WriteFontSetting()		" {{{2
     let _font_set_fname_=<SID>GetFontSettingFName()
 
     let _line_=<SID>FileData2String(_font_set_fname_)
+    call <SID>SyncCurrentFontInfo()
     let _data_=g:guiFont['data']
     if strlen(_line_)
 	execute 'let _fset_='._line_
